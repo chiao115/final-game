@@ -36,10 +36,10 @@ const questions = [
   { 題目: "y = -2/7(x-10)^2+9 的函數值不可能為下列何者？", 選項: ["10", "9", "0", "-1"], 正確答案: "10", 難度: "困難" },
   { 題目: "3、4、5 三張紙牌任意排成三位數，奇數的機率為？", 選項: ["2/3", "3/4", "2/5", "3/5"], 正確答案: "2/3", 難度: "困難" },
   { 題目: "數列 1,2,2,2,3,3,3,3,3,5,5,6，取小於眾數的機率是多少？", 選項: ["1/2", "1/3", "1/4", "1/5"], 正確答案: "1/3", 難度: "困難" },
-  { 題目: "14 個人的年齡為 5、30、36、50、3、55、65、37、4、5、55、40、5、30，何者正確？", 選項: ["眾數 4 歲", "中位數 36 歲", "全距 60 歲", "四分位距 45 歲"], 正確答案: "四分位距 45 歲", 難度: "困難" },
+  { 題目: "14 個人的年齡為 5、30、36、50、3、55、65、37、4、5、55、40、5、30，何者正確？", 選項: ["眾數:4歲", "中位數:36歲", "全距:60歲", "四分位距:45歲"], 正確答案: "四分位距:45歲", 難度: "困難" },
   { 題目: "阿嘉、小明發現兩人都會到相同的五間藥局買口罩， 為考驗默契兩人打算在同一天購買口罩，若選擇任意藥局的機會均等，則兩人到同一間藥局買口罩的機率為何？", 選項: ["1/2", "1/5", "1/10", "1/25"], 正確答案: "1/5", 難度: "困難" },
   { 題目: "籤筒中有 1 ~ 28 號籤，抽到 2 或 7 的倍數的機率？", 選項: ["1/14", "1/7", "4/7", "9/14"], 正確答案: "4/7", 難度: "困難" },
-  { 題目: "下列哪一個函數與 y = 2x²-4x 有相同頂點？", 選項: ["y = x² - 2x", "y = -(x + 1)²", "y = (x + 1)² + 2", "y = -(x - 1)² - 2"], 正確答案: "y = -(x - 1)² - 2", 難度: "困難" },
+  { 題目: "某表演廳共有 15 排座位，已知最後一排有 48 個座位，從第二排起每一排都比前一排多 2 個座位，試問該表演廳總共有多少個座位？", 選項: ["490", "510", "520", "528"], 正確答案: "490", 難度: "困難" },
   { 題目: "有一組資料由小排到大為 5、9、28、……、202、203、204、……、333、566。已知中位數是 203，若加入一個數值 309 到這組資料中，則中位數會變成多少？", 選項: ["203", "203.5", "204", "204.5"], 正確答案: "203.5", 難度: "困難" },
   { 題目: "擲骰兩次，第一次點數大於第二次的機率為 p，總和為質數的機率為 q，何者較大？", 選項: ["p = q", "p < q", "p > q", "無法比較"], 正確答案: "p = q", 難度: "困難" }
 ];
@@ -48,6 +48,11 @@ const bonusMap = {
   "簡單": 10,
   "中": 15,
   "困難": 25
+};
+const penaltyMap = {
+  "簡單": 25,
+  "中": 15,
+  "困難": 10
 };
 
 export default function Home() {
@@ -59,6 +64,8 @@ export default function Home() {
   const [streakCorrect, setStreakCorrect] = useState(0);
   const [streakWrong, setStreakWrong] = useState(0);
   const [showIntro, setShowIntro] = useState(true); 
+  const [teacherImage, setTeacherImage] = useState("/HappyTeacher.png");
+
 
 
   useEffect(() => {
@@ -88,8 +95,8 @@ export default function Home() {
 
   function checkAnswer(choice) {
     const isCorrect = choice === currentQ.正確答案;
-    const base = bonusMap[currentQ.難度] || 5;
-    let bonus = isCorrect ? base : -base;
+    const base = isCorrect ? (bonusMap[currentQ.難度] || 5) : -(penaltyMap[currentQ.難度] || 5);
+    let bonus = base;    
 
     if (isCorrect) {
       setStreakCorrect(s => s + 1);
@@ -101,10 +108,10 @@ export default function Home() {
 
     if (streakCorrect >= 2 && isCorrect) {
       bonus += 3;
-      setHintText("連續答對三題，老師對你刮目相看，答對每題多加3%耐心值");
+      setHintText("連續答對三題，老師對你刮目相看，當前答對每題多加3%耐心值～");
     } else if (streakWrong >= 2 && !isCorrect) {
       bonus -= 3;
-      setHintText("連續答錯三題，老師對你更加失望，答錯每題多扣3%耐心值!");
+      setHintText("連續答錯三題，老師對你更加失望，當前答錯每題多扣3%耐心值！");
     } else {
       setHintText("");
     }
@@ -116,13 +123,94 @@ export default function Home() {
       return next;
     });
 
+    if (streakCorrect + 1 >= 3 && isCorrect) {
+      setTeacherImage("/SurpriseTeacher.png");
+    } else if (streakWrong + 1 >= 3 && !isCorrect) {
+      setTeacherImage("/AngryTeacher.png");
+    } else {
+      setTeacherImage("/HappyTeacher.png");
+    }
+    
+
     getNextQuestion();
   }
 
   return (
-    <main className="min-h-screen bg-blue-900 text-white flex flex-col items-center justify-center p-6 relative">
+    <main className="min-h-screen text-white flex flex-col items-center justify-center p-6 relative"
+    style={{
+      backgroundImage: `url('/classroom.png')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat'
+    }}
+    >
+      {!showIntro && (
+        <>
+          {/* 對話框容器 */}
+          <div className="absolute left-[480px] top-[120px] w-[800px] h-[240px] z-20">
+            <img
+              src="/dialog1.png"
+              alt="對話框"
+              className="absolute w-full h-full object-contain"
+            />
+            {/* 題目文字區塊定位在對話框的右上角內部，對齊長方形 */}
+            <div className="absolute top-0 right-0 w-[720px] h-[195px] flex items-center justify-center p-4 py-2">
+              <div className="text-black text-xl font-bold text-center">
+                {currentQ.題目}
+              </div>
+            </div>
+          </div>
+
+          {/* 選項對話框 */}
+          <div className="absolute right-[460px] bottom-[150px] w-[410px] h-[260px] z-20">
+            <img
+              src="/dialog2.png"
+              alt="答案對話框"
+              className="absolute w-full h-full object-contain"
+            />
+            <div className="absolute top-0 left-0 w-[380] h-[240px] flex items-center justify-center p-4">
+              <div className="grid grid-cols-2 gap-y-4 gap-x-6 w-full h-full p-4">
+                {currentQ.選項?.map((opt, i) => (
+                  <button
+                    key={i}
+                    onClick={() => checkAnswer(opt)}
+                    className="bg-amber-300 text-white font-bold text-xl rounded-xl hover:bg-amber-600 p-2"
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* 老師區塊（包住老師圖＋頭上進度條） */}
+      <div className="absolute left-6 bottom-0 w-[400px] md:w-[500px] z-10">
+        {/* 頭上的進度條 */}
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-[95%] w-[250px] h-12 bg-white rounded-lg border-3  border-[#42210B] overflow-hidden">
+          <div
+            className="bg-red-300 h-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+
+        {/* 老師圖像本體 */}
+        <img
+          src={teacherImage}
+          alt="老師"
+          className="w-full drop-shadow-lg"
+        />
+      </div>
+      <img
+        src="/studentBack.png"
+        alt="學生背影"
+        className="absolute right-0 bottom-[-80px] w-[500px] h-auto z-10"
+      />
+
+
       {showIntro && (
-        <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-10">
+        <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-30">
           <div className="bg-white text-black rounded-xl p-8 max-w-md text-center shadow-lg">
             <h2 className="text-2xl font-bold mb-4">遊戲規則</h2>
             <p className="text-sm mb-2">你被數學老師點名了！答對會讓老師耐心回升，答錯則會減少。</p>
@@ -137,30 +225,17 @@ export default function Home() {
           </div>
         </div>
       )}
-      <h1 className="text-3xl font-bold mb-4">學渣的逆襲</h1>
 
-      <div className="w-full max-w-xl bg-white rounded h-4 mb-6">
-        <div
-          className="bg-pink-500 h-full transition-all duration-300"
-          style={{ width: `${progress}%` }}
-        ></div>
+      {/* {hintText && (
+        <div className="absolute top-[400px] left-1/2 -translate-x-1/2 text-xl font-bold text-yellow-200 text-outline z-30">
+          {hintText}
+        </div>
+      )} */}
+      <div className="absolute top-[380px] left-1/2 -translate-x-1 text-xl font-bold text-yellow-200 text-outline z-30">
+        連續答對三題，老師對你刮目相看，當前答對每題多加3%耐心值～
       </div>
 
-      <div className="text-xl mb-4">{currentQ.題目}</div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {currentQ.選項?.map((opt, i) => (
-          <button
-            key={i}
-            onClick={() => checkAnswer(opt)}
-            className="bg-white text-black px-4 py-2 rounded hover:bg-pink-300"
-          >
-            {opt}
-          </button>
-        ))}
-      </div>
-
-      {hintText && <div className="text-sm text-yellow-300 mt-4">{hintText}</div>}
     </main>
   );
 }
