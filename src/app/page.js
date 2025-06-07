@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useRef } from "react";
 
 const questions = [
   { 題目: "89 - 12 = ?", 選項: [82, 78, 68, 77], 正確答案: 77, 難度: "簡單" },
@@ -60,16 +61,21 @@ export default function Home() {
   const [progress, setProgress] = useState(80);
   const [currentQ, setCurrentQ] = useState({});
   const [lastQIndex, setLastQIndex] = useState(-1);
-  const [hintText, setHintText] = useState("");
   const [streakCorrect, setStreakCorrect] = useState(0);
   const [streakWrong, setStreakWrong] = useState(0);
-  const [showIntro, setShowIntro] = useState(true); 
   const [teacherImage, setTeacherImage] = useState("/HappyTeacher.png");
+  const [hintImage, setHintImage] = useState("");
+  const [shakeKey, setShakeKey] = useState(0);
+  const [introStep, setIntroStep] = useState(1); // 1=故事, 2=規則, 0=結束intro
+  const correctSound = useRef(null);
+  const wrongSound = useRef(null);
+  const successSound = useRef(null);
+  const failSound = useRef(null);
 
 
 
   useEffect(() => {
-    if (!showIntro) {
+    if (!introStep) {
       getNextQuestion();
       const timer = setInterval(() => {
         setProgress(p => {
@@ -81,7 +87,7 @@ export default function Home() {
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [showIntro])
+  }, [introStep])
 
   function getNextQuestion() {
     let newIndex;
@@ -101,25 +107,27 @@ export default function Home() {
     if (isCorrect) {
       setStreakCorrect(s => s + 1);
       setStreakWrong(0);
+      correctSound.current?.play();
+      
     } else {
+      setShakeKey(prev => prev + 1);
       setStreakWrong(s => s + 1);
       setStreakCorrect(0);
+      wrongSound.current?.play();
     }
 
     if (streakCorrect >= 2 && isCorrect) {
       bonus += 3;
-      setHintText("連續答對三題，老師對你刮目相看，當前答對每題多加3%耐心值～");
+      setHintImage("/BonusSign.png");
     } else if (streakWrong >= 2 && !isCorrect) {
       bonus -= 3;
-      setHintText("連續答錯三題，老師對你更加失望，當前答錯每題多扣3%耐心值！");
+      setHintImage("/DeductSign.png");
     } else {
-      setHintText("");
-    }
+      setHintImage("");
+    }       
 
     setProgress(p => {
       const next = Math.min(100, Math.max(0, p + bonus));
-      if (next === 100) router.push("/success");
-      if (next === 0) router.push("/fail");
       return next;
     });
 
@@ -144,9 +152,12 @@ export default function Home() {
       backgroundRepeat: 'no-repeat'
     }}
     >
-      {!showIntro && (
+      {/* 音效 */}
+      <audio ref={correctSound} src="/correct.mp3" preload="auto" />
+      <audio ref={wrongSound} src="/wrong.mp3" preload="auto" />
+      {introStep === 0 && (
         <>
-          {/* 對話框容器 */}
+          {/* 題目對話框 */}
           <div className="absolute left-[480px] top-[120px] w-[800px] h-[240px] z-20">
             <img
               src="/dialog1.png"
@@ -203,38 +214,85 @@ export default function Home() {
         />
       </div>
       <img
+        key={shakeKey}
         src="/studentBack.png"
         alt="學生背影"
-        className="absolute right-0 bottom-[-80px] w-[500px] h-auto z-10"
+        className="absolute right-0 bottom-[-80px] w-[500px] h-auto z-10 animate-shake"
       />
 
 
-      {showIntro && (
-        <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-30">
-          <div className="bg-white text-black rounded-xl p-8 max-w-md text-center shadow-lg">
-            <h2 className="text-2xl font-bold mb-4">遊戲規則</h2>
-            <p className="text-sm mb-2">你被數學老師點名了！答對會讓老師耐心回升，答錯則會減少。</p>
-            <p className="text-sm mb-2">連續答對或答錯三題會影響分數加減幅度。</p>
-            <p className="text-sm mb-4">當老師的耐心值滿時你就成功了，耐心歸零則失敗。</p>
-            <button
-              onClick={() => setShowIntro(false)}
-              className="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-            >
-              開始遊玩
-            </button>
+      {introStep > 0 && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-30">
+          <div className="bg-gray-900 border-10 border-amber-50 text-amber-50 rounded-3xl p-6 w-[800px] text-center">
+            {introStep === 1 && (
+              <>
+                <h1 className="text-3xl font-extrabold mb-4">我重生了，正在廢寢忘食解數學題</h1>
+                <p className="text-sm font-medium mb-2">別人都以為我是想通了，但只有我知道，數學考試那天，</p>
+                <p className="text-sm font-medium mb-2">全球詭異降臨，所有人將依照數學成績覺醒對應能力。</p>
+                <p className="text-sm font-medium mb-2">上一世的我是個數學學渣，連國小數學都會算錯，</p>
+                <p className="text-sm font-medium mb-2">最後只覺醒了「按計算機不會按錯鍵」的能力，末世第五天就被空間幾何異獸一腳踩死。</p>
+                <p className="text-sm font-medium mb-2">本以為一生就此結束，不曾想重生回到數學模擬考的前一天的數學課上，</p>
+                <p className="text-sm font-medium mb-2">我知道數學老師有點背景，得到他的支持能有更大的力量。</p>
+                <p className="text-sm font-medium mb-2">這一世，我注定要成為能用三角函數召喚雷電的男人。</p>
+
+
+                <button onClick={() => setIntroStep(2)} className="mt-1 hover:scale-105 transition-transform">
+                  <img
+                    src="/NextStep.png"
+                    alt="下一步"
+                    className="w-[160px] h-auto mx-auto"
+                  />
+                </button>
+
+              </>
+            )}
+            {introStep === 2 && (
+              <>
+                <h2 className="text-3xl font-extrabold mb-4">遊戲規則</h2>
+                <p className="text-sm font-medium mb-2">
+                  答對提升老師的耐心條，答錯則會讓它迅速下降。
+                </p>
+
+                <h2 className="text-xl font-semibold mt-5 mb-1">連鎖效果系統</h2>
+                <p className="text-sm font-medium mb-2">
+                  <span className="font-bold text-blue-600">連續答對 3 題：</span> 進入「暴擊狀態」，之後每答對一題，老師信任度倍增！
+                </p>
+                <p className="text-sm font-medium mb-4">
+                  <span className="font-bold text-yellow-600">連續答錯 3 題：</span> 進入「信任危機」，老師開始懷疑你根本沒在讀書，之後每錯一題損失更多耐心值。
+                </p>
+
+                <h2 className="text-xl font-semibold mt-5 mb-1">遊戲結束條件</h2>
+                <p className="text-sm font-medium mb-2">
+                  當老師的 <span className="font-bold">耐心條</span> 滿格或清空，這場模擬考將迎來你的命運時刻。
+                </p>
+                <p className="text-sm font-medium mb-2">
+                  是再次醒來發現自己依舊是那個算不出一次函數的廢物，還是以無敵的數學之力征服世界——
+                </p>
+                <p className="text-sm font-medium mb-4">這次由你決定。</p>
+
+                <button onClick={() => setIntroStep(0)} className="mt-1 hover:scale-105 transition-transform">
+                  <img
+                    src="/StartPlay.png"
+                    alt="開始遊玩"
+                    className="w-[160px] h-auto mx-auto"
+                  />
+                </button>
+
+              </>
+            )}
           </div>
         </div>
       )}
 
-      {/* {hintText && (
-        <div className="absolute top-[400px] left-1/2 -translate-x-1/2 text-xl font-bold text-yellow-200 text-outline z-30">
-          {hintText}
-        </div>
-      )} */}
-      <div className="absolute top-[380px] left-1/2 -translate-x-1 text-xl font-bold text-yellow-200 text-outline z-30">
-        連續答對三題，老師對你刮目相看，當前答對每題多加3%耐心值～
-      </div>
 
+      {hintImage && (
+        <img
+          src={hintImage}
+          alt="提示圖"
+          className="absolute top-[310px] left-[70%] -translate-x-1/2 w-[450px] z-30
+          transform transition duration-300 ease-out scale-100 animate-pop"
+        />
+      )}
 
     </main>
   );
