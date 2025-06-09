@@ -51,7 +51,7 @@ export default function Fail() {
           />
         </button>
 
-        <button onClick={() => router.push("/")}>
+        <button onClick={() => window.location.href = "https://classroomdaydream.vercel.app"}>
           <img
             src="/HomeButton.png"
             alt="回首頁"
