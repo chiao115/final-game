@@ -80,7 +80,7 @@ export default function Home() {
     if (!introStep) {
       getNextQuestion();
       const timer = setInterval(() => {
-        setProgress(p => Math.max(p - 3, 0));
+        setProgress(p => Math.max(p - 2, 0));
       }, 1000);
       return () => clearInterval(timer);
     }
