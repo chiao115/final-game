@@ -71,6 +71,8 @@ export default function Home() {
   const wrongSound = useRef(null);
   const successSound = useRef(null);
   const failSound = useRef(null);
+  const [gameOver, setGameOver] = useState(false);
+
 
 
 
@@ -78,16 +80,23 @@ export default function Home() {
     if (!introStep) {
       getNextQuestion();
       const timer = setInterval(() => {
-        setProgress(p => {
-          const next = Math.max(p - 3, 0);
-          if (next === 0) router.push("/fail");
-          if (next === 100) router.push("/success");
-          return next;
-        });
+        setProgress(p => Math.max(p - 3, 0));
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [introStep])
+  }, [introStep]);
+
+  useEffect(() => {
+    if (gameOver) return;
+    if (progress === 100) {
+      setGameOver(true);
+      router.push("/success");
+    } else if (progress === 0) {
+      setGameOver(true);
+      router.push("/fail");
+    }
+  }, [progress]);
+  
 
   function getNextQuestion() {
     let newIndex;
@@ -215,7 +224,7 @@ export default function Home() {
       </div>
       <img
         key={shakeKey}
-        src="/studentBack.png"
+        src="/StudentBack.png"
         alt="學生背影"
         className="absolute right-0 bottom-[-80px] w-[500px] h-auto z-10 animate-shake"
       />
